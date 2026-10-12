@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ginasio_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ginasio_admin
+      POSTGRES_PASSWORD: ginasio_pass
+      POSTGRES_DB: ginasio
+    ports:
+      - "5432:5432"
+    volumes:
+      - ginasio_pgdata:/var/lib/postgresql/data
+      # O script NÃO é montado em /docker-entrypoint-initdb.d de propósito:
+      # contém um INSERT inválido que abortaria a inicialização do container.
+      # É montado em /scripts (só leitura) e executado manualmente.
+      - ./gestao_ginasio.sql:/scripts/gestao_ginasio.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ginasio_admin -d ginasio"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ginasio_pgdata:
